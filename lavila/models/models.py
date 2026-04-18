@@ -1159,6 +1159,7 @@ def VCLM_OPENAI_TIMESFORMER_LARGE_336PX_GPT2_XL(
     remapped_state_dict = remap_keys(clip_model.visual.state_dict(), transformer_layers=24)
     res = vision_model.load_state_dict(remapped_state_dict, strict=False)
     print(res)
+    del clip_model, remapped_state_dict
     vision_model.head = nn.Identity()
     vision_model.pre_logits = nn.Identity()
     vision_model.fc = nn.Identity()
@@ -1171,6 +1172,7 @@ def VCLM_OPENAI_TIMESFORMER_LARGE_336PX_GPT2_XL(
     text_decoder = GatedGPT2LMHeadModel(new_config)
     for n, p in gpt2.named_parameters():
         rsetattr(text_decoder, n + '.data', p.data)
+    del gpt2
 
     if freeze_lm_vclm:
         print('Freeze the LM part of TextDecoder of VCLM')
