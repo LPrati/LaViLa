@@ -1142,6 +1142,7 @@ def VCLM_OPENAI_TIMESFORMER_LARGE_336PX_GPT2_XL(
     freeze_visual_vclm_temporal=False,
     num_frames=4,
     timesformer_gated_xattn=False,
+    pretrained_init=True,
     **kwargs,
 ):
     vision_model = SpaceTimeTransformer(
@@ -1154,25 +1155,32 @@ def VCLM_OPENAI_TIMESFORMER_LARGE_336PX_GPT2_XL(
         act_layer=QuickGELU,
         is_tanh_gating=timesformer_gated_xattn,
     )
-    clip_model, _ = load_openai_clip('ViT-L/14@336px', 'cpu')
-    print("=> Loading CLIP (ViT-L/14@336px) weights")
-    remapped_state_dict = remap_keys(clip_model.visual.state_dict(), transformer_layers=24)
-    res = vision_model.load_state_dict(remapped_state_dict, strict=False)
-    print(res)
-    del clip_model, remapped_state_dict
+    if pretrained_init:
+        clip_model, _ = load_openai_clip('ViT-L/14@336px', 'cpu')
+        print("=> Loading CLIP (ViT-L/14@336px) weights")
+        remapped_state_dict = remap_keys(clip_model.visual.state_dict(), transformer_layers=24)
+        res = vision_model.load_state_dict(remapped_state_dict, strict=False)
+        print(res)
+        del clip_model, remapped_state_dict
     vision_model.head = nn.Identity()
     vision_model.pre_logits = nn.Identity()
     vision_model.fc = nn.Identity()
 
-    gpt2 = GPT2LMHeadModel.from_pretrained(
-        "gpt2-xl",
-        use_cache=False,
-    )
-    new_config = augment_gpt2_config(gpt2.config, cross_attn_freq=3, gated_xattn=gated_xattn)
-    text_decoder = GatedGPT2LMHeadModel(new_config)
-    for n, p in gpt2.named_parameters():
-        rsetattr(text_decoder, n + '.data', p.data)
-    del gpt2
+    if pretrained_init:
+        gpt2 = GPT2LMHeadModel.from_pretrained(
+            "gpt2-xl",
+            use_cache=False,
+        )
+        new_config = augment_gpt2_config(gpt2.config, cross_attn_freq=3, gated_xattn=gated_xattn)
+        text_decoder = GatedGPT2LMHeadModel(new_config)
+        for n, p in gpt2.named_parameters():
+            rsetattr(text_decoder, n + '.data', p.data)
+        del gpt2
+    else:
+        from transformers import GPT2Config
+        gpt2_config = GPT2Config.from_pretrained("gpt2-xl")
+        new_config = augment_gpt2_config(gpt2_config, cross_attn_freq=3, gated_xattn=gated_xattn)
+        text_decoder = GatedGPT2LMHeadModel(new_config)
 
     if freeze_lm_vclm:
         print('Freeze the LM part of TextDecoder of VCLM')
