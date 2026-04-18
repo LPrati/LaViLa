@@ -14,7 +14,7 @@ dependencies = [
     "torchvision",
     "numpy",
     "timm",
-    "transformers",
+    "transformers>=4.27,<4.50",
     "einops",
     "decord",
     "pandas",
