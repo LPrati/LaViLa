@@ -13,7 +13,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from transformers import BeamSearchScorer
+from lavila.models.beam_search import BeamSearchScorer
 from transformers.generation.logits_process import (
     LogitsProcessorList,
     TopKLogitsWarper,
