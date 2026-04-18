@@ -51,7 +51,17 @@ from transformers.modeling_outputs import (
     SequenceClassifierOutputWithPast,
     TokenClassifierOutput,
 )
-from transformers.modeling_utils import PreTrainedModel, SequenceSummary
+from transformers.modeling_utils import PreTrainedModel
+try:
+    from transformers.modeling_utils import SequenceSummary
+except ImportError:
+    class SequenceSummary:
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "SequenceSummary was removed from transformers>=4.50 and is only used by "
+                "GPT2DoubleHeadsModel, which LaViLa's narrator does not need. Install "
+                "transformers<4.50 if you need GPT2DoubleHeadsModel."
+            )
 from transformers.pytorch_utils import Conv1D, find_pruneable_heads_and_indices, prune_conv1d_layer
 from transformers.utils import (
     ModelOutput,
